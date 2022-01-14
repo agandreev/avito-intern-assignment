@@ -22,8 +22,8 @@ const (
 	apiKeyTag  = "API_KEY"
 	dbUser     = "DB_USER"
 	dbPSWD     = "DB_PSWD"
-	dbName     = "db_Name"
-	dbPort     = "DB_Port"
+	dbName     = "DB_NAME"
+	dbPort     = "DB_PORT"
 	srvPort    = "SRV_PORT"
 )
 

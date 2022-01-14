@@ -1,3 +1,8 @@
+# Problems
+* В предложенном сервисе для конвертации валют в бесплатной подписке можно конвертировать валюты только в евро. Можно было бы сменить сервис на полностью бесплатный, но, чтобы не рисковать надежностью при переводе из валюты X в валюту Y я предпочел промежуточно переводить обе валюты в евро для рассчета коэффициента.
+* Я не стал делать авторизацию, т.к. предположил, что в этом мире за нее отвечает другой микросервис. Однако, если это было необхожимо, то в моем репозитории есть проект AlgoTrader с реализацией JWT авторизации. 
+
+----
 # Preparation
 
 ----
@@ -29,7 +34,7 @@
 Below you can read the descriptions of the endpoints calls
 
 ----
-**Add user**
+**Balance**
 ----
 This option allow you to get user's balance by id.
 
@@ -50,7 +55,7 @@ This option allow you to get user's balance by id.
   **Required:**
   ```
   {
-  "id": ""
+  "id": 1
   }
   ```
 
@@ -78,14 +83,13 @@ This option allow you to get user's balance by id.
     }'
   ```
   ----
-**Login**
+**History**
 ----
-This option allows you to get JWT token and use it for authorization in future steps.
-Authorization is carried out using `username`, `public key` and `private key`
+This option allows you to get your transactions' history by id. You can limit transaction's quantity by "quantity" and you can sort output by "date" or "amount". 
 
 * **URL**
 
-  /auth/login
+  /users/history
 
 * **Method:**
 
@@ -100,9 +104,9 @@ Authorization is carried out using `username`, `public key` and `private key`
   **Required:**
   ```
   {
-  "username": "",
-  "public_key": "",
-  "private_key": ""
+    "id": 2,
+    "quantity": 1,
+    "mode": "date"
   }
   ```
 
@@ -111,38 +115,50 @@ Authorization is carried out using `username`, `public key` and `private key`
   If successful, then you should receive only status code.
 
     * **Code:** `200 OK`
-      **Content:** `{"token":"xxx"}`
+    * **Content:**
+      ```
+        [
+          {
+            "initiator_id": 2,
+            "type": "WITHDRAW",
+            "amount": 76.41201481050776,
+            "timestamp": "2022-01-14T15:01:38.888762Z"
+          }
+        ]
 
 * **Error Response:**
 
   In case of failure, you should receive status code and error message.
 
     * **Code:** `400 BAD REQUEST`
-      **Content:** `{ error : "incorrect public or private key" }`
-    * **Code:** `501 INTERNAL SERVER ERROR`
-      **Content:** `{ error : "json: unsupported value: NaN" }`
+      **Content:** `{"error": "can't load history: <user with this id doesn't exist>"}`
+    
 
 * **Sample Call:**
 
   ```
-  curl --data '{"username": "1","public_key": "1","private_key": "1"}' \
-  http://localhost:<port>/auth/login
+  curl --location --request POST 'localhost:8000/users/history' \
+    --header 'Content-Type: text/plain' \
+    --data-raw '{
+    "id": 200,
+    "quantity": 1,
+    "mode": "date"
+    }'
   ```
   ----
-**Set keys**
+**Deposit**
 ----
-This option requires authorization by JWT token stored as header.
-It allows you to switch `public key` or `private key`
+This option allows you to increase your balance by your id.
 
 * **URL**
 
-  /users/set_keys
+  /operations/deposit
 
 * **Method:**
 
   `POST`
 
-*  **URL Params**
+* **URL Params**
 
    None
 
@@ -151,51 +167,121 @@ It allows you to switch `public key` or `private key`
   **Required:**
   ```
   {
-  "public_key": "",
-  "private_key": ""
+    "initiator_id": 200,
+    "amount": 100
+  }
+  ```
+
+  * **Success Response:**
+
+    If successful, then you should receive status code and response body.
+
+      * **Code:** `201 CREATED`
+      * **Content:**
+          ```
+            {
+              "initiator": {
+                "id": 200,
+                "amount": 360.7355773908967
+              },
+              "type": "DEPOSIT",
+              "amount": 100,
+              "timestamp": "2022-01-14T16:10:52.3293451+03:00"
+            }
+
+* **Error Response:**
+
+  In case of failure, you should receive status code and error message.
+
+    * **Code:** `400 BAD REQUEST`
+      **Content:** `{"error": "grossbook get user error: <user with this id doesn't exist>"}`
+
+* **Sample Call:**
+
+  ```
+  curl --location --request POST 'localhost:8000/operations/deposit' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "initiator_id": 200,
+  "amount": 100
+  }'
+  ```
+  ----
+**Withdraw**
+----
+This option allows you to decrease your balance by your id. You can choose currency through query.
+
+* **URL**
+
+  /operations/withdraw
+
+* **Method:**
+
+  `POST`
+
+*  **URL Params**
+
+   `?currency=USD`
+
+* **Data Params**
+
+  **Required:**
+  ```
+  {
+    "initiator_id": 200,
+    "amount": 1
   }
   ```
 
 * **Success Response:**
 
-  If successful, then you should receive only status code.
+  If successful, then you should receive status code and response body.
 
     * **Code:** `201 CREATED`
+      * **Content:**
+        ```
+        {
+          "initiator": {
+            "id": 200,
+            "amount": 360.7355773908967
+          },
+          "type": "WITHDRAW",
+          "amount": 76.41201481050776,
+          "timestamp": "2022-01-14T16:10:52.3293451+03:00"
+        }
 
 * **Error Response:**
 
   In case of failure, you should receive status code and error message.
 
     * **Code:** `400 BAD REQUEST`
-      **Content:** `{ error : "incorrect public or private key" }`
-    * **Code:** `401 UNAUTHORIZED`
-      **Content:** `{ error : "token contains an invalid number of segments" }`
-    * **Code:** `501 INTERNAL SERVER ERROR`
-      **Content:** `{ error : "json: unsupported value: NaN" }`
+      **Content:** `{"error": "grossbook get user error: <user with this id doesn't exist>"}`
 
 * **Sample Call:**
 
   ```
-  curl -H 'Authorization: Bearer xxx' \
-  --data '{"public_key": "1","private_key": "1"}' \
-  http://localhost:<port>/auth/login
+  curl --location --request POST 'localhost:8000/operations/withdraw?currency=USD' \
+  --header 'Content-Type: text/plain' \
+  --data-raw '{
+  "initiator_id": 200,
+  "amount": 1
+  }'
   ```
+
   ----
-**Start pair**
+**Transfer**
 ----
-This option requires authorization by JWT token stored as header.
-It allows you to subscribe on trading pair that you're interested in by candle interval.
-Also, it works only for 1, 2, 5 and 10 minutes candles.
+This option allows you to transfer money from one user to another.
 
 * **URL**
 
-  /pair/start
+  /operations/transfer
 
 * **Method:**
 
   `POST`
 
-*  **URL Params**
+* **URL Params**
 
    None
 
@@ -204,91 +290,44 @@ Also, it works only for 1, 2, 5 and 10 minutes candles.
   **Required:**
   ```
   {
-    "pair_name": "PI_BCHUSD",
-    "pair_interval": "candles_trade_1m",
-    "indicator_name": "Donchian"
-  }
-  ```
-  **Optional:**
-  ```
-  {
-    "pair_name": "PI_BCHUSD",
-    "pair_interval": "candles_trade_1m",
-    "indicator_name": "Donchian",
-    "limit": 0.05
+    "initiator_id": 200,
+    "receiver_id": 100,
+    "amount": 1
   }
   ```
 
-* **Success Response:**
+  * **Success Response:**
 
-  If successful, then you should receive only status code.
+    If successful, then you should receive status code and response body.
 
-    * **Code:** `201 CREATED`
+      * **Code:** `201 CREATED`
+      * **Content:**
+      ```
+        {
+         "initiator": {
+           "id": 200,
+           "amount": 360.7355773908967
+         },
+         "type": "WITHDRAW",
+         "amount": 76.41201481050776,
+         "timestamp": "2022-01-14T16:10:52.3293451+03:00"
+         }
 
 * **Error Response:**
 
   In case of failure, you should receive status code and error message.
 
     * **Code:** `400 BAD REQUEST`
-      **Content:** `{ error : "unsupported candle type" }`
-    * **Code:** `401 UNAUTHORIZED`
-      **Content:** `{ error : "token contains an invalid number of segments" }`
+      **Content:** `{"error" :"grossbook get owner error: <user with this id doesn't exist>"}`
 
 * **Sample Call:**
 
   ```
-  curl -H 'Authorization: Bearer xxx' \
-  --data '{"pair_name": "PI_BCHUSD","pair_interval": "candles_trade_1m","indicator_name": "Donchian"}' \
-  http://localhost:<port>/pair/start
-  ```
-
-  ----
-**Stop pair**
-----
-This option requires authorization by JWT token stored as header.
-It allows you to unsubscribe trading pair. And it will stopped if users' quantity is zero.
-
-* **URL**
-
-  /pair/stop
-
-* **Method:**
-
-  `POST`
-
-*  **URL Params**
-
-   None
-
-* **Data Params**
-
-  **Required:**
-  ```
-  {
-    "pair_name": "PI_BCHUSD",
-    "pair_interval": "candles_trade_1m"
-  }
-  ```
-
-* **Success Response:**
-
-  If successful, then you should receive only status code.
-
-    * **Code:** `200 OK`
-
-* **Error Response:**
-
-  In case of failure, you should receive status code and error message.
-
-    * **Code:** `400 BAD REQUEST`
-      **Content:** `{ error : "unsupported candle type" }`
-    * **Code:** `401 UNAUTHORIZED`
-      **Content:** `{ error : "token contains an invalid number of segments" }`
-
-* **Sample Call:**
-
-  ```
-  curl -H 'Authorization: Bearer xxx' \
-  --data '{"pair_name": "PI_BCHUSD","pair_interval": "candles_trade_1m"}' \
-  http://localhost:<port>/pair/stop
+  curl --location --request POST 'localhost:8000/operations/transfer' \
+  --header 'Content-Type: text/plain' \
+  --data-raw '{
+  "initiator_id": 200,
+  "receiver_id": 100,
+  "amount": 1
+  }'
   ```

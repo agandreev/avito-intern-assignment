@@ -77,11 +77,11 @@ func (handler *Handler) balanceHandler(w http.ResponseWriter, r *http.Request) {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(respBody); err != nil {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 // depositHandler handles increasing domain.User's balance.
@@ -109,11 +109,11 @@ func (handler *Handler) depositHandler(w http.ResponseWriter, r *http.Request) {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	if _, err = w.Write(respBody); err != nil {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 }
 
 // depositHandler handles decreasing domain.User's balance.
@@ -147,11 +147,11 @@ func (handler *Handler) withdrawHandler(w http.ResponseWriter, r *http.Request) 
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	if _, err = w.Write(respBody); err != nil {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 }
 
 // transferHandler handles transfer from one domain.User to another.
@@ -179,11 +179,11 @@ func (handler *Handler) transferHandler(w http.ResponseWriter, r *http.Request) 
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	if _, err = w.Write(respBody); err != nil {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 }
 
 // historyHandler handles getting info about all domain.User's Operations.
@@ -211,11 +211,11 @@ func (handler *Handler) historyHandler(w http.ResponseWriter, r *http.Request) {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(respBody); err != nil {
 		processError(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 // processError sends status code with error text.

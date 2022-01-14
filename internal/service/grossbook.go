@@ -130,6 +130,9 @@ func (grossBook *GrossBook) TransferMoney(ownerID, receiverID int64, amount floa
 		Type:   domain.TransferOut,
 		Amount: amount,
 	}
+	if owner.ID == receiverID {
+		return nil, fmt.Errorf("grossbook can't transfer money for the same user")
+	}
 	if err = owner.Withdraw(amount); err != nil {
 		return nil, fmt.Errorf("grossbook owner withdraw error: <%w>", err)
 	}

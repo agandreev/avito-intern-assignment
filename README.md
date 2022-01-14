@@ -15,8 +15,8 @@
     API_KEY=
     DB_USER=user
     DB_PSWD=passwd
-    db_Name=fintech
-    DB_Port=5442
+    DB_NAME=fintech
+    DB_PORT=5442
     SRV_PORT=8000
 
 ## Up database

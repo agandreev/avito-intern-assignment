@@ -101,13 +101,13 @@ func (storage *GrossBookStorage) AddOperation(operation domain.Operation) error 
 		return ErrNotConnected
 	}
 	// start transaction to add operations and update users
-	tx, err := storage.pool.Begin(context.TODO())
+	tx, err := storage.pool.Begin(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback(context.TODO())
+			tx.Rollback(context.Background())
 		}
 	}()
 	// check that operation is correct
@@ -129,7 +129,7 @@ func (storage *GrossBookStorage) AddOperation(operation domain.Operation) error 
 	if err = processOperation(tx, operation); err != nil {
 		return fmt.Errorf("can't execute transaction: <%w>", err)
 	}
-	tx.Commit(context.TODO())
+	tx.Commit(context.Background())
 	return nil
 }
 
@@ -193,11 +193,11 @@ func sortOperations(operations []domain.RepositoryOperation, mode domain.Sorting
 // processOperation executes pgx.Tx by domain.Operation.
 func processOperation(tx pgx.Tx, operation domain.Operation) error {
 	// update initiator
-	if _, err := tx.Exec(context.TODO(), "UPDATE users SET amount=$1 WHERE user_id=$2",
+	if _, err := tx.Exec(context.Background(), "UPDATE users SET amount=$1 WHERE user_id=$2",
 		operation.Initiator.Amount, operation.Initiator.ID); err != nil {
 		return fmt.Errorf("can't execute transaction with initiator: <%w>", err)
 	}
-	// add initiator transaction
+	// add non-duplex transaction
 	if !operation.IsTransfer() {
 		if _, err := tx.Exec(context.Background(),
 			insertNonTransferOperationSQL,
@@ -205,9 +205,8 @@ func processOperation(tx pgx.Tx, operation domain.Operation) error {
 			operation.Timestamp); err != nil {
 			return fmt.Errorf("can't add operation to db <%w>", err)
 		}
-	}
-
-	if operation.IsTransfer() {
+	} else {
+		// add duplex transaction (transfer-out)
 		if _, err := tx.Exec(context.Background(),
 			insertTransferOperationSQL,
 			operation.Initiator.ID, operation.Type, operation.Amount,
@@ -215,11 +214,11 @@ func processOperation(tx pgx.Tx, operation domain.Operation) error {
 			return fmt.Errorf("can't add operation to db <%w>", err)
 		}
 		// update receiver
-		if _, err := tx.Exec(context.TODO(), "UPDATE users SET amount=$1 WHERE user_id=$2",
+		if _, err := tx.Exec(context.Background(), "UPDATE users SET amount=$1 WHERE user_id=$2",
 			operation.Receiver.Amount, operation.Receiver.ID); err != nil {
 			return fmt.Errorf("can't execute transaction with initiator: <%w>", err)
 		}
-		// add receiver transaction
+		// add reversed duplex transaction (transfer-in)
 		reversed, err := operation.Reverse()
 		if err != nil {
 			return fmt.Errorf("can't add reversed transaction: <%w>", err)

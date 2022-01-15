@@ -28,7 +28,7 @@ type OperationRepository interface {
 	GetOperations(id, offset int64, mode domain.SortingMode) ([]domain.RepositoryOperation, error)
 }
 
-// Converter converts amount of money from one currency to another
+// Converter converts amount of money from one currency to RUB.
 type Converter interface {
 	Convert(from string, amount float64) (float64, error)
 }
@@ -148,10 +148,10 @@ func (grossBook *GrossBook) TransferMoney(ownerID, receiverID int64, amount floa
 	}
 	operation := domain.Operation{
 		Initiator: owner,
-		Type:   domain.TransferOut,
-		Amount: amount,
+		Type:      domain.TransferOut,
+		Amount:    amount,
 		Timestamp: time.Now(),
-		Receiver: receiver,
+		Receiver:  receiver,
 	}
 	// update db
 	if err = grossBook.Users.AddOperation(operation); err != nil {

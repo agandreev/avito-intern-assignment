@@ -259,6 +259,7 @@ func (conversion ConversionResponse) checkRatesLen(currency string) error {
 			return fmt.Errorf("there is no RUB is response")
 		}
 	case 2:
+		// case with 3 currencies, including RUB and EURO
 		if _, ok := conversion.Rates[currency]; !ok {
 			return fmt.Errorf("lack of currency in map: %s", currency)
 		}

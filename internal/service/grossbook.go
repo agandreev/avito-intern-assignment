@@ -50,13 +50,15 @@ func NewGrossBook(users GrossBookRepository, exchange Converter,
 	}
 }
 
-// DepositMoney deposits money and updates db.
+// DepositMoney increases user balance by id and updates db.
 func (grossBook *GrossBook) DepositMoney(id int64, amount float64) (
 	*domain.Operation, error) {
 	grossBook.log.Printf("DEPOSIT: <%f>RUB to <%d> processing...", amount, id)
+	// get user or create it
 	user, err := grossBook.Users.GetUser(id)
 	if err != nil {
 		switch err {
+		// create empty raw in db
 		case repository.ErrNoSuchUser:
 			if err = grossBook.Users.AddUser(id); err != nil {
 				return nil, fmt.Errorf("grossbook get user error: <%w>", err)
@@ -65,15 +67,17 @@ func (grossBook *GrossBook) DepositMoney(id int64, amount float64) (
 			return nil, fmt.Errorf("grossbook get user error: <%w>", err)
 		}
 	}
+	// increase User's amount
+	if err = user.Deposit(amount); err != nil {
+		return nil, fmt.Errorf("grossbook deposit error: <%w>", err)
+	}
 	operation := domain.Operation{
 		Initiator: user,
 		Type:      domain.Deposit,
 		Amount:    amount,
+		Timestamp: time.Now(),
 	}
-	if err = user.Deposit(amount); err != nil {
-		return nil, fmt.Errorf("grossbook deposit error: <%w>", err)
-	}
-	operation.Timestamp = time.Now()
+	// update db
 	if err = grossBook.Users.AddOperation(operation); err != nil {
 		return nil, fmt.Errorf("grossbook update error: <%w>", err)
 	}
@@ -82,29 +86,34 @@ func (grossBook *GrossBook) DepositMoney(id int64, amount float64) (
 	return &operation, nil
 }
 
-// WithdrawMoney withdraws money and updates db.
+// WithdrawMoney decreases domain.User's balance and updates db.
 func (grossBook *GrossBook) WithdrawMoney(id int64, amount float64, currency string) (
 	*domain.Operation, error) {
 	grossBook.log.Printf("WITHDRAW: <%f> from <%d> processing...", amount, id)
+	// get user
 	user, err := grossBook.Users.GetUser(id)
 	if err != nil {
 		return nil, fmt.Errorf("grossbook get user error: <%w>", err)
+	}
+	// convert amount to RUB
+	if len(currency) != 0 {
+		convertedAmount, err := grossBook.Exchange.Convert(currency, amount)
+		if err != nil {
+			return nil, fmt.Errorf("gorssbook withdraw conversion error: <%w>", err)
+		}
+		amount = convertedAmount
+	}
+	// decrease user's balance
+	if err = user.Withdraw(amount); err != nil {
+		return nil, fmt.Errorf("grossbook withdraw error: <%w>", err)
 	}
 	operation := domain.Operation{
 		Initiator: user,
 		Type:      domain.Withdraw,
 		Amount:    amount,
+		Timestamp: time.Now(),
 	}
-	if len(currency) != 0 {
-		if amount, err = grossBook.Exchange.Convert(currency, amount); err != nil {
-			return nil, fmt.Errorf("gorssbook withdraw conversion error: <%w>", err)
-		}
-		operation.Amount = amount
-	}
-	if err = user.Withdraw(amount); err != nil {
-		return nil, fmt.Errorf("grossbook withdraw error: <%w>", err)
-	}
-	operation.Timestamp = time.Now()
+	// update db
 	if err = grossBook.Users.AddOperation(operation); err != nil {
 		return nil, fmt.Errorf("grossbook update error: <%w>", err)
 	}
@@ -113,11 +122,12 @@ func (grossBook *GrossBook) WithdrawMoney(id int64, amount float64, currency str
 	return &operation, nil
 }
 
-// TransferMoney transfers money and updates db.
+// TransferMoney transfers money from one domain.User to another and updates db.
 func (grossBook *GrossBook) TransferMoney(ownerID, receiverID int64, amount float64) (
 	*domain.Operation, error) {
 	grossBook.log.Printf("TRANSFER: <%f>RUB from <%d> to <%d> processing...",
 		amount, ownerID, receiverID)
+	// get users
 	owner, err := grossBook.Users.GetUser(ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("grossbook get owner error: <%w>", err)
@@ -126,27 +136,30 @@ func (grossBook *GrossBook) TransferMoney(ownerID, receiverID int64, amount floa
 	if err != nil {
 		return nil, fmt.Errorf("grossbook get receiver error: <%w>", err)
 	}
-	operation := domain.Operation{Initiator: owner,
-		Type:   domain.TransferOut,
-		Amount: amount,
-	}
 	if owner.ID == receiverID {
 		return nil, fmt.Errorf("grossbook can't transfer money for the same user")
 	}
+	// decrease and increase balances
 	if err = owner.Withdraw(amount); err != nil {
 		return nil, fmt.Errorf("grossbook owner withdraw error: <%w>", err)
 	}
 	if err = receiver.Deposit(amount); err != nil {
 		return nil, fmt.Errorf("grossbook receiver deposit error: <%w>", err)
 	}
-	operation.Timestamp = time.Now()
-	operation.Receiver = receiver
+	operation := domain.Operation{
+		Initiator: owner,
+		Type:   domain.TransferOut,
+		Amount: amount,
+		Timestamp: time.Now(),
+		Receiver: receiver,
+	}
+	// update db
 	if err = grossBook.Users.AddOperation(operation); err != nil {
 		return nil, fmt.Errorf("grossbook transfer update error: <%w>", err)
 	}
 	grossBook.log.Printf("TRANSFER: <%f>RUB from <%d> to <%d> was processed successful",
 		amount, ownerID, receiverID)
-	// hide amount for safety
+	// hide second side amount for safety
 	operation.Receiver = &domain.User{ID: receiverID}
 	return &operation, nil
 }

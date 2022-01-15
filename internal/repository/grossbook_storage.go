@@ -169,7 +169,7 @@ func (storage *GrossBookStorage) GetOperations(id int64, offset int64,
 	return operations, nil
 }
 
-// Shutdown closes connection.
+// Shutdown closes connection. It blocks while all current queries are processing.
 func (storage GrossBookStorage) Shutdown() {
 	if storage.pool != nil {
 		storage.pool.Close()

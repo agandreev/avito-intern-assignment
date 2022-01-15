@@ -21,7 +21,10 @@ var (
 // OperationType describes type of Operation.
 type OperationType string
 
-// Operation represents a transaction event.
+// Operation represents a transaction event. It can be duplex and non-duplex.
+// Duplex Operation uses two User (Initiator and Receiver) to denote that both of
+// them participate in the operation. Non-duplex Operation denote that User uses
+// operations like deposit or withdraw.
 type Operation struct {
 	Initiator *User         `json:"initiator"`
 	Type      OperationType `json:"type"`

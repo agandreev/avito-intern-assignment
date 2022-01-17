@@ -70,8 +70,8 @@ func (storage *GrossBookStorage) Connect() error {
 	return nil
 }
 
-// GetUser return domain.User by id.
-func (storage *GrossBookStorage) GetUser(id int64) (*domain.User, error) {
+// User return domain.User by id.
+func (storage *GrossBookStorage) User(id int64) (*domain.User, error) {
 	row := storage.pool.QueryRow(context.Background(),
 		"SELECT * FROM users WHERE user_id=$1", id)
 	var user domain.User
@@ -115,12 +115,12 @@ func (storage *GrossBookStorage) AddOperation(ctx context.Context, operation dom
 		return fmt.Errorf("can't add operation: <%w>", err)
 	}
 	// check if users are existed
-	if _, err = storage.GetUser(operation.Initiator.ID); err != nil {
+	if _, err = storage.User(operation.Initiator.ID); err != nil {
 		return fmt.Errorf("error while adding operation "+
 			"(can't get initiator): <%w>", err)
 	}
 	if operation.IsTransfer() {
-		if _, err = storage.GetUser(operation.Receiver.ID); err != nil {
+		if _, err = storage.User(operation.Receiver.ID); err != nil {
 			return fmt.Errorf("error while adding operation "+
 				"(can't get receiver): <%w>", err)
 		}
@@ -135,9 +135,9 @@ func (storage *GrossBookStorage) AddOperation(ctx context.Context, operation dom
 	return nil
 }
 
-// GetOperations returns domain.Operation's slice by domain.User's id,
+// Operations returns domain.Operation's slice by domain.User's id,
 // sorted as domain.SortingMode and limited as offset
-func (storage *GrossBookStorage) GetOperations(id int64, offset int64,
+func (storage *GrossBookStorage) Operations(id int64, offset int64,
 	mode domain.SortingMode) ([]domain.RepositoryOperation, error) {
 	if offset <= 0 {
 		return nil, fmt.Errorf("incorrect offset value")

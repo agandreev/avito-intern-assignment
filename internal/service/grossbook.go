@@ -3,6 +3,7 @@ package service
 import (
 	"avitoInternAssignment/internal/domain"
 	"avitoInternAssignment/internal/repository"
+	"context"
 	"fmt"
 	"time"
 
@@ -24,7 +25,7 @@ type UserRepository interface {
 
 // OperationRepository describes UserStorage methods.
 type OperationRepository interface {
-	AddOperation(operation domain.Operation) error
+	AddOperation(ctx context.Context, operation domain.Operation) error
 	GetOperations(id, offset int64, mode domain.SortingMode) ([]domain.RepositoryOperation, error)
 }
 
@@ -78,7 +79,7 @@ func (grossBook *GrossBook) DepositMoney(id int64, amount float64) (
 		Timestamp: time.Now(),
 	}
 	// update db
-	if err = grossBook.Users.AddOperation(operation); err != nil {
+	if err = grossBook.Users.AddOperation(context.Background(), operation); err != nil {
 		return nil, fmt.Errorf("grossbook update error: <%w>", err)
 	}
 	grossBook.log.Printf("DEPOSIT: <%f>RUB from <%d> was processed successful",
@@ -114,7 +115,7 @@ func (grossBook *GrossBook) WithdrawMoney(id int64, amount float64, currency str
 		Timestamp: time.Now(),
 	}
 	// update db
-	if err = grossBook.Users.AddOperation(operation); err != nil {
+	if err = grossBook.Users.AddOperation(context.Background(), operation); err != nil {
 		return nil, fmt.Errorf("grossbook update error: <%w>", err)
 	}
 	grossBook.log.Printf("WITHDRAW: <%f>RUB from <%d> was processed successful",
@@ -154,7 +155,7 @@ func (grossBook *GrossBook) TransferMoney(ownerID, receiverID int64, amount floa
 		Receiver:  receiver,
 	}
 	// update db
-	if err = grossBook.Users.AddOperation(operation); err != nil {
+	if err = grossBook.Users.AddOperation(context.Background(), operation); err != nil {
 		return nil, fmt.Errorf("grossbook transfer update error: <%w>", err)
 	}
 	grossBook.log.Printf("TRANSFER: <%f>RUB from <%d> to <%d> was processed successful",

@@ -96,18 +96,18 @@ func (storage *GrossBookStorage) AddUser(id int64) error {
 }
 
 // AddOperation adds domain.Operation to the storage and updates domain.User from it.
-func (storage *GrossBookStorage) AddOperation(operation domain.Operation) error {
+func (storage *GrossBookStorage) AddOperation(ctx context.Context, operation domain.Operation) error {
 	if storage.pool == nil {
 		return ErrNotConnected
 	}
 	// start transaction to add operations and update users
-	tx, err := storage.pool.Begin(context.Background())
+	tx, err := storage.pool.Begin(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback(context.Background())
+			tx.Rollback(ctx)
 		}
 	}()
 	// check that operation is correct
@@ -126,10 +126,12 @@ func (storage *GrossBookStorage) AddOperation(operation domain.Operation) error 
 		}
 	}
 	// try to execute queries
-	if err = processOperation(tx, operation); err != nil {
+	if err = processOperation(ctx, tx, operation); err != nil {
 		return fmt.Errorf("can't execute transaction: <%w>", err)
 	}
-	tx.Commit(context.Background())
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("can't commit operation transaction: <%w>", err)
+	}
 	return nil
 }
 
@@ -191,15 +193,38 @@ func sortOperations(operations []domain.RepositoryOperation, mode domain.Sorting
 }
 
 // processOperation executes pgx.Tx by domain.Operation.
-func processOperation(tx pgx.Tx, operation domain.Operation) error {
+func processOperation(ctx context.Context, tx pgx.Tx, operation domain.Operation) error {
 	// update initiator
-	if _, err := tx.Exec(context.Background(), "UPDATE users SET amount=$1 WHERE user_id=$2",
-		operation.Initiator.Amount, operation.Initiator.ID); err != nil {
-		return fmt.Errorf("can't execute transaction with initiator: <%w>", err)
+	if err := updateUser(ctx, tx, *operation.Initiator); err != nil {
+		return fmt.Errorf("transaction initiator error: <%w>", err)
 	}
+	// update receiver if it's existed
+	if operation.IsTransfer() {
+		if err := updateUser(ctx, tx, *operation.Receiver); err != nil {
+			return fmt.Errorf("transaction receiver error: <%w>", err)
+		}
+	}
+	// add operation info to db
+	if err := addOperation(ctx, tx, operation); err != nil {
+		return fmt.Errorf("can't add operation to db: <%w>", err)
+	}
+	return nil
+}
+
+// updateUser updates domain.User's balance in db.
+func updateUser(ctx context.Context, tx pgx.Tx, user domain.User) error {
+	if _, err := tx.Exec(ctx, "UPDATE users SET amount=$1 WHERE user_id=$2",
+		user.Amount, user.ID); err != nil {
+		return fmt.Errorf("can't execute user updation: <%w>", err)
+	}
+	return nil
+}
+
+// addOperation adds domain.Operation's info to db.
+func addOperation(ctx context.Context, tx pgx.Tx, operation domain.Operation) error {
 	// add non-duplex transaction
 	if !operation.IsTransfer() {
-		if _, err := tx.Exec(context.Background(),
+		if _, err := tx.Exec(ctx,
 			insertNonTransferOperationSQL,
 			operation.Initiator.ID, operation.Type, operation.Amount,
 			operation.Timestamp); err != nil {
@@ -207,28 +232,28 @@ func processOperation(tx pgx.Tx, operation domain.Operation) error {
 		}
 	} else {
 		// add duplex transaction (transfer-out)
-		if _, err := tx.Exec(context.Background(),
-			insertTransferOperationSQL,
-			operation.Initiator.ID, operation.Type, operation.Amount,
-			operation.Timestamp, operation.Receiver.ID); err != nil {
-			return fmt.Errorf("can't add operation to db <%w>", err)
-		}
-		// update receiver
-		if _, err := tx.Exec(context.Background(), "UPDATE users SET amount=$1 WHERE user_id=$2",
-			operation.Receiver.Amount, operation.Receiver.ID); err != nil {
-			return fmt.Errorf("can't execute transaction with initiator: <%w>", err)
+		if err := addDuplexOperation(ctx, tx, operation); err != nil {
+			return fmt.Errorf("origin operation error: <%w>", err)
 		}
 		// add reversed duplex transaction (transfer-in)
 		reversed, err := operation.Reverse()
 		if err != nil {
 			return fmt.Errorf("can't add reversed transaction: <%w>", err)
 		}
-		if _, err = tx.Exec(context.Background(),
-			insertTransferOperationSQL,
-			reversed.Initiator.ID, reversed.Type, reversed.Amount,
-			reversed.Timestamp, reversed.Receiver.ID); err != nil {
-			return fmt.Errorf("can't add operation to db <%w>", err)
+		if err = addDuplexOperation(ctx, tx, *reversed); err != nil {
+			return fmt.Errorf("origin operation error: <%w>", err)
 		}
+	}
+	return nil
+}
+
+// addDuplexOperation adds domain.Operation's info with receiver id to db.
+func addDuplexOperation(ctx context.Context, tx pgx.Tx, operation domain.Operation) error {
+	if _, err := tx.Exec(ctx,
+		insertTransferOperationSQL,
+		operation.Initiator.ID, operation.Type, operation.Amount,
+		operation.Timestamp, operation.Receiver.ID); err != nil {
+		return fmt.Errorf("can't add operation to db <%w>", err)
 	}
 	return nil
 }

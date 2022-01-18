@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/agandreev/avito-intern-assignment/internal/domain"
-	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"io"
 	"net/http"
 	"time"
 
+	// Register swagger staff
 	_ "github.com/agandreev/avito-intern-assignment/docs"
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
+	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"

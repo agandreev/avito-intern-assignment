@@ -1,10 +1,11 @@
 package controller
 
 import (
-	"github.com/agandreev/avito-intern-assignment/internal/handlers"
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/agandreev/avito-intern-assignment/internal/handlers"
 )
 
 // Server represents http server structure with handler's implementations.

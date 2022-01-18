@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/agandreev/avito-intern-assignment/internal/domain"
 	"context"
 	"database/sql"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"log"
 	"sort"
 
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )

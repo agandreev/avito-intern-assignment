@@ -1,3 +1,18 @@
+<h1 align="center">Тестовое задание на позицию стажера-бекендера</h1>
+
+## Libraries
+
+- [Chi](https://github.com/go-chi/chi)
+- [Swagger](https://github.com/swaggo/http-swagger)
+- [Testify](https://github.com/stretchr/testify)
+- [Logrus](https://github.com/sirupsen/logrus)
+- [Viper](https://github.com/spf13/viper)
+- [PGX](https://github.com/jackc/pgx)
+
+## Notes
+
+- Оба дополнительных задания выполнены.
+
 # Problems
 * В предложенном сервисе для конвертации валют в бесплатной подписке можно конвертировать валюты только в евро. Можно было бы сменить сервис на полностью бесплатный, но, чтобы не рисковать надежностью при переводе из валюты X в валюту Y я предпочел промежуточно переводить обе валюты в евро для рассчета коэффициента.
 * Я не стал делать авторизацию, т.к. предположил, что в этом мире за нее отвечает другой микросервис. Однако, если это было необходимо, то в моем репозитории есть проект AlgoTrader с реализацией JWT авторизации. 
@@ -31,7 +46,7 @@
 # Rest API
 
 ----
-Below you can read the descriptions of the endpoints calls
+Below you can read the descriptions of the endpoints calls, or you can see it here [Swagger](http://localhost:8000/swagger/index.html#/).
 
 ----
 **Balance**

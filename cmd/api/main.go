@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/agandreev/avito-intern-assignment/internal/controller"
-	"github.com/agandreev/avito-intern-assignment/internal/handlers"
-	"github.com/agandreev/avito-intern-assignment/internal/repository"
-	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"io"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/agandreev/avito-intern-assignment/internal/controller"
+	"github.com/agandreev/avito-intern-assignment/internal/handlers"
+	"github.com/agandreev/avito-intern-assignment/internal/repository"
+	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

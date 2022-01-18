@@ -1,12 +1,12 @@
 package service
 
 import (
-	"github.com/agandreev/avito-intern-assignment/internal/domain"
-	"github.com/agandreev/avito-intern-assignment/internal/repository"
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
+	"github.com/agandreev/avito-intern-assignment/internal/repository"
 	"github.com/sirupsen/logrus"
 )
 

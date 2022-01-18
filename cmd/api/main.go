@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -61,7 +62,7 @@ func main() {
 	handler := handlers.NewHandler(gb, logger)
 	srv := controller.NewServer(*handler)
 	go func() {
-		if err = srv.Run(port); err != nil {
+		if err = srv.Run(port); err != nil && err != http.ErrServerClosed {
 			logger.Fatalf("ERROR: running server is failed <%s>", err)
 		}
 	}()

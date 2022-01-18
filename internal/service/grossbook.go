@@ -1,8 +1,8 @@
 package service
 
 import (
-	"avitoInternAssignment/internal/domain"
-	"avitoInternAssignment/internal/repository"
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
+	"github.com/agandreev/avito-intern-assignment/internal/repository"
 	"context"
 	"fmt"
 	"time"

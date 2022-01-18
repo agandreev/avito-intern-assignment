@@ -1,16 +1,18 @@
 package handlers
 
 import (
-	"avitoInternAssignment/internal/domain"
-	"avitoInternAssignment/internal/service"
 	"encoding/json"
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
+	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"io"
 	"net/http"
 	"time"
 
+	_ "github.com/agandreev/avito-intern-assignment/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const (
@@ -39,6 +41,8 @@ func (handler *Handler) InitRoutes() *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Timeout(10 * time.Second))
 
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
+
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/balance", handler.balanceHandler)
 		r.Post("/history", handler.historyHandler)
@@ -53,7 +57,17 @@ func (handler *Handler) InitRoutes() *chi.Mux {
 	return r
 }
 
-// balanceHandler handles getting domain.User's balance.
+// balanceHandler
+// @Summary      shows user's balance
+// @Description  returns user's money amount by given id
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   body      domain.User  true  "User ID (amount is redundant)"
+// @Success      200  {object}  domain.User
+// @Failure      400  {object}  domain.ErrorJSON
+// @Failure      500  {object}  domain.ErrorJSON
+// @Router       /users/balance [post]
 func (handler *Handler) balanceHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -84,7 +98,17 @@ func (handler *Handler) balanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// depositHandler handles increasing domain.User's balance.
+// depositHandler
+// @Summary      increases user's balance
+// @Description  increases user's balance by given id and money amount, and returns operation info
+// @Tags         operations
+// @Accept       json
+// @Produce      json
+// @Param        input   body      domain.OperationInput  true  "Operation parameters (receiver id is redundant)"
+// @Success      201  {object}  domain.Operation
+// @Failure      400  {object}  domain.ErrorJSON
+// @Failure      500  {object}  domain.ErrorJSON
+// @Router       /operations/deposit [post]
 func (handler *Handler) depositHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -116,7 +140,18 @@ func (handler *Handler) depositHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// depositHandler handles decreasing domain.User's balance.
+// withdrawHandler
+// @Summary      decreases user's balance
+// @Description  decreases user's balance by given id and money amount, and returns operation info
+// @Tags         operations
+// @Accept       json
+// @Produce      json
+// @Param        input   	body      domain.OperationInput true  	"Operation parameters (receiver id is redundant)"
+// @Param        currency   query     string  				false   "Withdraw currency"
+// @Success      201  		{object}  domain.Operation
+// @Failure      400  		{object}  domain.ErrorJSON
+// @Failure      500  		{object}  domain.ErrorJSON
+// @Router       /operations/withdraw [post]
 func (handler *Handler) withdrawHandler(w http.ResponseWriter, r *http.Request) {
 	var currencyValue string
 	// query is necessary for currency type value
@@ -154,7 +189,17 @@ func (handler *Handler) withdrawHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// transferHandler handles transfer from one domain.User to another.
+// transferHandler
+// @Summary      transfers money from one user to another
+// @Description  decreases initiator user's balance and increases receiver's balance, and returns operation info
+// @Tags         operations
+// @Accept       json
+// @Produce      json
+// @Param        input   	body      domain.OperationInput true  	"Operation parameters"
+// @Success      201  		{object}  domain.Operation
+// @Failure      400  		{object}  domain.ErrorJSON
+// @Failure      500  		{object}  domain.ErrorJSON
+// @Router       /operations/transfer [post]
 func (handler *Handler) transferHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -186,7 +231,17 @@ func (handler *Handler) transferHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// historyHandler handles getting info about all domain.User's Operations.
+// historyHandler
+// @Summary      returns user's history of operations
+// @Description  returns a list of operations in which the user appeared, starting from the end
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        input	body      domain.HistoryInput true  	"History input"
+// @Success      200  	{object}  []domain.RepositoryOperation
+// @Failure      400  	{object}  domain.ErrorJSON
+// @Failure      500  	{object}  domain.ErrorJSON
+// @Router       /users/history [post]
 func (handler *Handler) historyHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {

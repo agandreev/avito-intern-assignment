@@ -1,0 +1,226 @@
+basePath: /
+definitions:
+  domain.ErrorJSON:
+    properties:
+      error:
+        type: string
+    type: object
+  domain.HistoryInput:
+    properties:
+      id:
+        type: integer
+      mode:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  domain.Operation:
+    properties:
+      amount:
+        type: number
+      initiator:
+        $ref: '#/definitions/domain.User'
+      receiver:
+        $ref: '#/definitions/domain.User'
+      timestamp:
+        type: string
+      type:
+        type: string
+    type: object
+  domain.OperationInput:
+    properties:
+      amount:
+        type: number
+      initiator_id:
+        type: integer
+      receiver_id:
+        type: integer
+    type: object
+  domain.RepositoryOperation:
+    properties:
+      amount:
+        type: number
+      initiator_id:
+        type: integer
+      receiver_id:
+        type: integer
+      timestamp:
+        type: string
+      type:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      amount:
+        type: number
+      id:
+        type: integer
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: This is a multi-user balance control system.
+  title: Balance control API
+  version: "1.0"
+paths:
+  /operations/deposit:
+    post:
+      consumes:
+      - application/json
+      description: increases user's balance by given id and money amount, and returns
+        operation info
+      parameters:
+      - description: Operation parameters (receiver id is redundant)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.OperationInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Operation'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+      summary: increases user's balance
+      tags:
+      - operations
+  /operations/transfer:
+    post:
+      consumes:
+      - application/json
+      description: decreases initiator user's balance and increases receiver's balance,
+        and returns operation info
+      parameters:
+      - description: Operation parameters
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.OperationInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Operation'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+      summary: transfers money from one user to another
+      tags:
+      - operations
+  /operations/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: decreases user's balance by given id and money amount, and returns
+        operation info
+      parameters:
+      - description: Operation parameters (receiver id is redundant)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.OperationInput'
+      - description: Withdraw currency
+        in: query
+        name: currency
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Operation'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+      summary: decreases user's balance
+      tags:
+      - operations
+  /users/balance:
+    post:
+      consumes:
+      - application/json
+      description: returns user's money amount by given id
+      parameters:
+      - description: User ID (amount is redundant)
+        in: body
+        name: id
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+      summary: shows user's balance
+      tags:
+      - users
+  /users/history:
+    post:
+      consumes:
+      - application/json
+      description: returns a list of operations in which the user appeared, starting
+        from the end
+      parameters:
+      - description: History input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/domain.HistoryInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.RepositoryOperation'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorJSON'
+      summary: returns user's history of operations
+      tags:
+      - users
+swagger: "2.0"

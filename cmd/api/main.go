@@ -1,12 +1,12 @@
 package main
 
 import (
-	"avitoInternAssignment/internal/controller"
-	"avitoInternAssignment/internal/handlers"
-	"avitoInternAssignment/internal/repository"
-	"avitoInternAssignment/internal/service"
 	"context"
 	"fmt"
+	"github.com/agandreev/avito-intern-assignment/internal/controller"
+	"github.com/agandreev/avito-intern-assignment/internal/handlers"
+	"github.com/agandreev/avito-intern-assignment/internal/repository"
+	"github.com/agandreev/avito-intern-assignment/internal/service"
 	"io"
 	"os"
 	"os/signal"
@@ -27,6 +27,12 @@ const (
 	srvPort    = "SRV_PORT"
 )
 
+// @title Balance control API
+// @version 1.0
+// @description This is a multi-user balance control system.
+
+// @host localhost:8000
+// @BasePath /
 func main() {
 	logger := logrus.New()
 	// add file logger

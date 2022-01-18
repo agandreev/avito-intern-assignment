@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"avitoInternAssignment/internal/handlers"
+	"github.com/agandreev/avito-intern-assignment/internal/handlers"
 	"context"
 	"net/http"
 	"time"

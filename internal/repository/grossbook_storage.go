@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"avitoInternAssignment/internal/domain"
+	"github.com/agandreev/avito-intern-assignment/internal/domain"
 	"context"
 	"database/sql"
 	"errors"

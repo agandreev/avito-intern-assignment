@@ -346,3 +346,7 @@ This option allows you to transfer money from one user to another.
   "amount": 1
   }'
   ```
+
+## TODO
+
+- Add [easyjson](https://github.com/mailru/easyjson) to improve performance.
